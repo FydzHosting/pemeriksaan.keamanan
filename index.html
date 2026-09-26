@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Pemberitahuan Perangkat</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:Arial,Helvetica,sans-serif}
+body{color:#fff}
+#home{position:fixed;inset:0;background:#080808}
+.topbar{height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;background:#111;border-bottom:1px solid #292929}
+.topbar b{font-size:15px}.clock{color:#aaa;font-size:12px}.content{padding:16px}
+.card{background:#121212;border:1px solid #292929;border-radius:15px;padding:18px;margin-bottom:14px}
+.card h2{font-size:18px}.card p{color:#888;font-size:12px;line-height:1.7;margin-top:8px}
+.green{color:#00ff66}.button{width:100%;border:0;border-radius:11px;padding:15px;margin-top:16px;background:#167df2;color:white;font-weight:bold}
+#scan{display:none;position:fixed;inset:0;z-index:10;background:#050505}
+.scanCenter{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:25px}
+.loader{width:80px;height:80px;border:5px solid #222;border-top-color:#278cff;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.scanTitle{margin-top:25px;font-size:21px;font-weight:bold}.scanSub{margin-top:9px;color:#777;font-size:12px}
+.progressBox{width:min(420px,90%);height:9px;margin-top:25px;background:#222;border-radius:20px;overflow:hidden}
+.progress{width:0;height:100%;background:#278cff;transition:.1s}.percent{margin-top:9px;color:#777;font:11px monospace}
+#notifications{display:none;position:fixed;inset:0;z-index:30;background:#060606;overflow:hidden}
+.notifyTop{height:55px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;background:#111;border-bottom:1px solid #292929}
+.notification{position:absolute;left:9px;right:9px;padding:13px;background:rgba(30,30,30,.98);border:1px solid #444;border-radius:15px;box-shadow:0 10px 30px rgba(0,0,0,.85);animation:notifyIn .22s ease}
+.notification.danger{background:#260505;border-color:#921414}.notificationHead{display:flex;align-items:center;gap:9px}
+.appIcon{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:#333}
+.danger .appIcon{background:#710000}.appName{flex:1;color:#aaa;font-size:11px}.notifyTime{color:#777;font-size:10px}
+.notificationTitle{margin-top:8px;font-size:14px;font-weight:bold}.notificationText{margin-top:5px;color:#bbb;font-size:11px;line-height:1.5}
+.notificationAction{margin-top:9px;text-align:right;color:#4b9dff;font-size:11px}
+@keyframes notifyIn{from{opacity:0;transform:translateY(-100px)}to{opacity:1;transform:translateY(0)}}
+#critical{display:none;position:fixed;inset:0;z-index:50;background:radial-gradient(circle,#350000,#0b0000 55%,#000);align-items:center;justify-content:center;text-align:center;padding:20px}
+.criticalIcon{font-size:80px;color:#ff1515;text-shadow:0 0 15px red,0 0 55px red}.criticalTitle{margin-top:10px;color:#ff2020;font-size:clamp(30px,9vw,65px);font-weight:1000;text-shadow:0 0 25px red}
+.criticalText{margin-top:15px;color:#bbb;font-size:13px;line-height:1.8}.threatBox{margin:22px auto 0;max-width:390px;padding:13px;text-align:left;background:#130303;border:1px solid #611111;border-radius:10px;font:11px/1.8 monospace}
+.red{color:#ff2929}.yellow{color:#ffd000}.dangerBar{height:12px;margin-top:20px;border:1px solid #ff2020;padding:2px}.dangerFill{width:0;height:100%;background:#ff2020;box-shadow:0 0 15px red}
+.dangerPercent{margin-top:7px;color:#ff5555;font:10px monospace}
+#countdown{display:none;position:fixed;inset:0;z-index:60;background:#080000;align-items:center;justify-content:center;text-align:center}
+.countTitle{color:#ff2020;font-size:clamp(25px,7vw,48px);font-weight:1000}.countSub{margin-top:13px;color:#888;font-size:12px}
+.countNumber{margin-top:18px;color:#ff2020;font-size:100px;font-weight:1000;text-shadow:0 0 40px red}
+#jumpscare{display:none;position:fixed;inset:0;width:100vw;height:100vh;z-index:9999;background:#000;overflow:hidden;align-items:center;justify-content:center}
+#jumpscareFlash{position:absolute;inset:0;background:#ff0000;opacity:0;z-index:3;pointer-events:none}
+.scareFace{position:absolute;width:150vw;height:150vw;min-width:850px;min-height:850px;border-radius:50%;
+background:radial-gradient(ellipse at 29% 37%,#fff 0 5%,#ff1515 6% 9%,#050000 10% 16%,transparent 17%),radial-gradient(ellipse at 71% 37%,#fff 0 5%,#ff1515 6% 9%,#050000 10% 16%,transparent 17%),radial-gradient(ellipse at 50% 72%,#000 0 17%,#ff1515 18% 23%,#210000 24% 35%,transparent 36%),radial-gradient(circle at 50% 50%,#3d0000,#080000 70%);
+border:10px solid #9c0000;box-shadow:0 0 25px red,0 0 80px red,0 0 150px rgba(255,0,0,.7);transform:scale(.15);z-index:2}
+.scareFace:before{content:"";position:absolute;left:25%;right:25%;bottom:17%;height:23%;background:#000;border-radius:45% 45% 55% 55%;border:10px solid #6d0000;box-shadow:inset 0 0 35px #ff0000}
+.scareFace:after{content:"";position:absolute;left:29%;right:29%;bottom:24%;height:8%;background:repeating-linear-gradient(90deg,#fff 0 10px,#9b0000 10px 15px);z-index:4}
+.glitch{position:absolute;inset:0;z-index:5;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0 4px,rgba(255,0,0,.18) 5px 7px);mix-blend-mode:screen;opacity:.8}
+.scareWarning{position:absolute;bottom:25px;z-index:7;color:#ff1717;font-size:clamp(18px,5vw,30px);font-weight:1000;letter-spacing:4px;text-shadow:0 0 20px red}
+.jumpscareRun .scareFace{animation:zoomFace .38s cubic-bezier(.1,.8,.2,1) forwards,violentShake .055s .38s infinite}
+.jumpscareRun .glitch{animation:glitchMove .07s infinite}.jumpscareRun #jumpscareFlash{animation:flashAttack .7s ease}
+@keyframes zoomFace{0%{transform:scale(.05);opacity:0}55%{transform:scale(1.15);opacity:1}100%{transform:scale(1);opacity:1}}
+@keyframes violentShake{0%{transform:scale(1) translate(0)}25%{transform:scale(1.04) translate(13px,-9px)}50%{transform:scale(.98) translate(-14px,10px)}75%{transform:scale(1.03) translate(10px,8px)}100%{transform:scale(1) translate(0)}}
+@keyframes glitchMove{0%{transform:translate(0);opacity:.4}25%{transform:translate(-10px,4px);opacity:1}50%{transform:translate(8px,-5px);opacity:.5}75%{transform:translate(-5px,7px);opacity:1}100%{transform:translate(0);opacity:.4}}
+@keyframes flashAttack{0%{opacity:0}8%{opacity:.95}18%{opacity:0}35%{opacity:.55}100%{opacity:0}}
+#black{display:none;position:fixed;inset:0;z-index:10000;background:#000;align-items:center;justify-content:center;text-align:center}
+.blackTitle{color:#ff2020;font-size:clamp(28px,8vw,52px);font-weight:1000}.blackSub{margin-top:15px;color:#555;font-size:11px}
+.dots{margin-top:25px;color:#ff2020;letter-spacing:10px;animation:blink .4s infinite}@keyframes blink{50%{opacity:.15}}
+#final{display:none;position:fixed;inset:0;z-index:10001;background:#000;align-items:center;justify-content:center;text-align:center;padding:20px}
+.finalTitle{color:#00ff66;font-size:clamp(45px,13vw,105px);font-weight:1000;text-shadow:0 0 10px #00ff66,0 0 35px #00ff66,0 0 70px rgba(0,255,100,.5);animation:finalIn .9s ease}
+.finalText{margin-top:18px;font-size:25px;font-weight:bold}.finalSmall{margin-top:12px;color:#777;font-size:13px}.developer{margin-top:45px;color:#555;font-size:12px}.developer b{color:#00ff66}
+@keyframes finalIn{from{opacity:0;transform:scale(.2)}to{opacity:1;transform:scale(1)}}
+@media(max-width:600px){.content{padding:13px}.scareFace{width:180vw;height:180vw}}
+</style>
+</head>
+<body>
+<div id="home">
+<div class="topbar"><b>Informasi Perangkat</b><span class="clock" id="clock">00:00</span></div>
+<div class="content">
+<div class="card"><h2>Status Perangkat</h2><p>Perlindungan perangkat sedang aktif. Belum ada pemeriksaan terbaru.</p><p>Status: <span class="green">Normal</span></p></div>
+<div class="card"><h2>Pemeriksaan Keamanan</h2><p>Pemeriksaan akan mencari aktivitas mencurigakan dan masalah perangkat.</p><button class="button" onclick="startScan()">MULAI PEMERIKSAAN</button></div>
+</div>
+</div>
+
+<div id="scan"><div class="scanCenter"><div class="loader"></div><div class="scanTitle" id="scanTitle">Menyiapkan pemeriksaan...</div><div class="scanSub" id="scanSub">Harap tunggu sebentar.</div><div class="progressBox"><div class="progress" id="progress"></div></div><div class="percent" id="percent">0%</div></div></div>
+
+<div id="notifications"><div class="notifyTop"><b>Pemberitahuan</b><span class="red">●</span></div></div>
+
+<div id="critical"><div>
+<div class="criticalIcon">⚠</div><div class="criticalTitle">ANCAMAN KRITIS</div>
+<div class="criticalText">Beberapa masalah serius ditemukan selama pemeriksaan perangkat.</div>
+<div class="threatBox"><div class="red">● Ancaman tingkat tinggi ditemukan</div><div class="yellow">● Aktivitas mencurigakan terdeteksi</div><div class="red">● Perlindungan perangkat terganggu</div><div class="red">● Tindakan segera diperlukan</div></div>
+<div class="dangerBar"><div class="dangerFill" id="dangerFill"></div></div><div class="dangerPercent" id="dangerPercent">Tingkat ancaman: 0%</div>
+</div></div>
+
+<div id="countdown"><div><div class="countTitle">JANGAN MATIKAN PERANGKAT</div><div class="countSub">Sistem sedang menyiapkan tindakan keamanan.</div><div class="countNumber" id="countNumber">10</div></div></div>
+
+<div id="jumpscare"><div class="scareFace"></div><div class="glitch"></div><div id="jumpscareFlash"></div><div class="scareWarning">PERINGATAN!</div></div>
+
+<div id="black"><div><div class="blackTitle">PERANGKAT SEDANG DIAMANKAN</div><div class="blackSub">Jangan tutup halaman ini...</div><div class="dots">● ● ●</div></div></div>
+
+<div id="final"><div><div class="finalTitle">KENA PRANK 🗿</div><div class="finalText">WKWKWKWKWK 😂</div><div class="finalSmall">Santai bro, HP lu aman.</div><div class="developer">Dibuat oleh <b>Fydz Official</b></div></div></div>
+
+<script>
+function updateClock(){const d=new Date();document.getElementById("clock").textContent=d.toLocaleTimeString("id-ID",{hour:"2-digit",minute:"2-digit"});}
+setInterval(updateClock,1000);updateClock();
+
+let audio;
+function initAudio(){try{if(!audio)audio=new(window.AudioContext||window.webkitAudioContext)();audio.resume();}catch(e){}}
+function beep(freq=600,dur=.07,volume=.03){try{initAudio();const o=audio.createOscillator(),g=audio.createGain();o.type="square";o.frequency.value=freq;g.gain.setValueAtTime(volume,audio.currentTime);g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+dur);o.connect(g);g.connect(audio.destination);o.start();o.stop(audio.currentTime+dur);}catch(e){}}
+
+function startScan(){initAudio();document.getElementById("home").style.display="none";document.getElementById("scan").style.display="block";runScan();}
+
+function runScan(){
+let value=0;
+const progress=document.getElementById("progress"),percent=document.getElementById("percent"),title=document.getElementById("scanTitle"),sub=document.getElementById("scanSub");
+const stages=["Memeriksa perangkat...","Memeriksa aplikasi...","Memeriksa penyimpanan...","Memeriksa aktivitas...","Mencari aktivitas mencurigakan...","Menganalisis ancaman...","Menyelesaikan pemeriksaan..."];
+const timer=setInterval(()=>{
+value+=Math.floor(Math.random()*4)+1;if(value>100)value=100;
+progress.style.width=value+"%";percent.textContent=value+"%";title.textContent=stages[Math.min(Math.floor(value/15),stages.length-1)];
+sub.textContent=value<70?"Pemeriksaan sedang berlangsung...":"Hasil pemeriksaan sedang dianalisis...";
+if(value%10===0)beep(700,.03);
+if(value>=100){clearInterval(timer);setTimeout(showNotifications,1000);}
+},130);
+}
+
+const notifications=[
+{icon:"⚠",app:"Keamanan Perangkat",title:"Aktivitas mencurigakan ditemukan",text:"Sistem menemukan aktivitas yang tidak biasa.",danger:false},
+{icon:"⚠",app:"Perlindungan Perangkat",title:"Peringatan keamanan",text:"Perlindungan perangkat membutuhkan perhatian.",danger:false},
+{icon:"!",app:"Pemeriksaan Penyimpanan",title:"Masalah terdeteksi",text:"Aktivitas tidak dikenal ditemukan pada penyimpanan.",danger:true},
+{icon:"!",app:"Keamanan Perangkat",title:"Ancaman tingkat tinggi",text:"Aktivitas berisiko tinggi terdeteksi.",danger:true},
+{icon:"×",app:"Perlindungan Sistem",title:"Perlindungan terganggu",text:"Pemeriksaan keamanan tidak dapat diselesaikan.",danger:true},
+{icon:"!",app:"Pemberitahuan Penting",title:"Tindakan diperlukan",text:"Jangan matikan perangkat selama proses berlangsung.",danger:true},
+{icon:"!",app:"Keamanan Perangkat",title:"Ancaman bertambah",text:"Aktivitas mencurigakan lainnya ditemukan.",danger:true},
+{icon:"⚠",app:"Pusat Keamanan",title:"PERINGATAN SERIUS",text:"Perangkat membutuhkan tindakan segera.",danger:true}
+];
+
+function createNotification(data,index){
+const el=document.createElement("div");el.className="notification "+(data.danger?"danger":"");el.style.top=(67+Math.random()*58)+"px";
+el.innerHTML=`<div class="notificationHead"><div class="appIcon">${data.icon}</div><div class="appName">${data.app}</div><div class="notifyTime">${index+1} mnt</div></div><div class="notificationTitle">${data.title}</div><div class="notificationText">${data.text}</div><div class="notificationAction">PERIKSA</div>`;
+document.getElementById("notifications").appendChild(el);beep(data.danger?190:550,.08);
+}
+
+function showNotifications(){
+document.getElementById("scan").style.display="none";const area=document.getElementById("notifications");area.style.display="block";let i=0;
+const timer=setInterval(()=>{createNotification(notifications[i],i);i++;if(i>=notifications.length){clearInterval(timer);setTimeout(criticalScreen,1600);}},500);
+}
+
+function criticalScreen(){
+document.getElementById("notifications").style.display="none";document.getElementById("critical").style.display="flex";let value=0;
+const fill=document.getElementById("dangerFill"),percent=document.getElementById("dangerPercent");
+const timer=setInterval(()=>{value+=2;if(value>100)value=100;fill.style.width=value+"%";percent.textContent="Tingkat ancaman: "+value+"%";if(value%10===0)beep(150,.12);if(value>=100){clearInterval(timer);setTimeout(countdownScreen,1200);}},70);
+}
+
+function countdownScreen(){
+document.getElementById("critical").style.display="none";document.getElementById("countdown").style.display="flex";let n=10;const number=document.getElementById("countNumber");
+const timer=setInterval(()=>{number.textContent=n;beep(n<=3?160:220,.13);if(n<=0){clearInterval(timer);setTimeout(jumpScare,650);return;}n--;},1000);
+}
+
+function jumpScare(){
+document.getElementById("countdown").style.display="none";const scare=document.getElementById("jumpscare");scare.style.display="flex";scare.classList.remove("jumpscareRun");void scare.offsetWidth;scare.classList.add("jumpscareRun");
+beep(75,.5,.07);setTimeout(()=>beep(950,.09,.05),90);setTimeout(()=>beep(130,.35,.07),180);setTimeout(()=>beep(500,.12,.04),280);
+setTimeout(()=>{scare.style.display="none";blackScreen();},1250);
+}
+
+function blackScreen(){document.getElementById("black").style.display="flex";beep(90,.45,.05);setTimeout(finalScreen,3000);}
+function finalScreen(){document.getElementById("black").style.display="none";document.getElementById("final").style.display="flex";for(let i=0;i<8;i++)setTimeout(()=>beep(400+(i*110),.1,.035),i*110);}
+</script>
+</body>
+</html>
